@@ -34,7 +34,7 @@ export default function SelectElement({
 
   useEffect(() => {
     if (selected) onChange(selected);
-  }, [selected]);
+  }, [selected, onChange]);
 
   if (!selected) return null;
 

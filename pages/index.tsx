@@ -5,7 +5,7 @@ import { FiPlusCircle } from 'react-icons/fi';
 
 import Layout from '../components/Layout';
 import PostItem, { IPostItem } from '../components/PostItem';
-import Loader from '../components/shared/Loader';
+import CoolLoader from '../components/shared/CoolLoader';
 import { api } from '../utils/api';
 
 const pageSize = 10;
@@ -37,16 +37,16 @@ const Home: NextPage = () => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [page, setPage] = useState(0);
 
-  const loadItems = async (page: number) => {
-    if (loading) {
-      return;
-    }
-
+  const loadItems = useCallback(async (page: number, isInitialLoad = false) => {
     setLoading(true);
 
     try {
       const { resources, count } = await fetchItems(page);
-      setPosts((oldPosts) => [...oldPosts, ...resources]);
+      if (isInitialLoad) {
+        setPosts(resources);
+      } else {
+        setPosts((oldPosts) => [...oldPosts, ...resources]);
+      }
       setPage(page);
 
       setTotalPages(Math.ceil(count / pageSize));
@@ -54,7 +54,7 @@ const Home: NextPage = () => {
       setLoading(false);
       setInitialLoad(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (totalPages) {
@@ -67,8 +67,8 @@ const Home: NextPage = () => {
   }, [totalPages, page]);
 
   useEffect(() => {
-    loadItems(0);
-  }, []);
+    loadItems(0, true);
+  }, [loadItems]);
 
   const onNext = async () => {
     loadItems(page + 1);
@@ -77,7 +77,10 @@ const Home: NextPage = () => {
   if (initialLoad) {
     return (
       <Layout>
-        <Loader />
+        <CoolLoader 
+          message="Loading latest resources..." 
+          size="lg"
+        />
       </Layout>
     );
   }

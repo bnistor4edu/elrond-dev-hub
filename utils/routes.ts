@@ -22,6 +22,7 @@ export const searchPath = (q?: string) => {
 export const bountyPath = "/bounty";
 export const expertsPath = "/experts";
 export const decenterPath = "/toolindex";
+export const projectRequestsPath = "/project-requests";
 export const whishlistPath = "/whishlist";
 export const monthlyLeaderboardPath = "/monthly-leaderboard";
 export const teamFinder = "/team-finder";

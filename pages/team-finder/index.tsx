@@ -1,4 +1,5 @@
 import { NextSeo } from "next-seo";
+import Image from "next/image";
 import Layout from "../../components/Layout";
 import { FiLink, FiGithub, FiUser, FiGrid, FiList } from "react-icons/fi";
 import { FaXTwitter, FaTelegram, FaGlobe } from "react-icons/fa6";
@@ -11,6 +12,42 @@ import DeveloperBadge from "../../components/shared/DeveloperBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import CoolLoader from "../../components/shared/CoolLoader";
+
+// Custom ProfileImage component with error handling
+const ProfileImage = ({ src, alt, width, height, className }: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+}) => {
+  const [imageSrc, setImageSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImageSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      setImageSrc("/default/default-avatar.png");
+    }
+  };
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleError}
+    />
+  );
+};
 
 interface Badge {
   id: string;
@@ -99,6 +136,37 @@ const fetchDevelopers = async (): Promise<DeveloperProfile[]> => {
   }
 };
 
+// Static developer data as fallback - moved outside component to prevent recreation
+const staticDeveloperData: DeveloperProfile[] = [
+  {
+    name: "Cool Developer",
+    description: "#C#O#O#L#D#E#V#E#L#O#P#E#R#",
+    profileImageUrl: "/team-finder/alex-johnson.jpg",
+    skills: ["Rust", "TypeScript", "Smart Contracts"],
+    mainExpertise: "be the first",
+    availability: "always",
+    experience: "☺ years",
+    interests: "DeFi and NFTs",
+    badges: [
+      {
+        id: "xdev-member",
+        name: "xDev Member",
+        description:
+          "Active member of the MultiversX Developer Hub community",
+        imageUrl: "/badges/xdev-member.png",
+        category: "Community",
+      },
+    ],
+    socials: {
+      github: "https://github.com/",
+      twitter: "https://twitter.com/",
+      telegram: "https://t.me/",
+      website: "https://multiversx.com/",
+      email: null,
+    },
+  },
+];
+
 export default function TeamFinderPage() {
   const router = useRouter();
   const { developer } = router.query;
@@ -108,37 +176,6 @@ export default function TeamFinderPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  // Static developer data as fallback
-  const staticDeveloperData: DeveloperProfile[] = [
-    {
-      name: "Cool Developer",
-      description: "#C#O#O#L#D#E#V#E#L#O#P#E#R#",
-      profileImageUrl: "/team-finder/alex-johnson.jpg",
-      skills: ["Rust", "TypeScript", "Smart Contracts"],
-      mainExpertise: "be the first",
-      availability: "always",
-      experience: "☺ years",
-      interests: "DeFi and NFTs",
-      badges: [
-        {
-          id: "xdev-member",
-          name: "xDev Member",
-          description:
-            "Active member of the MultiversX Developer Hub community",
-          imageUrl: "/badges/xdev-member.png",
-          category: "Community",
-        },
-      ],
-      socials: {
-        github: "https://github.com/",
-        twitter: "https://twitter.com/",
-        telegram: "https://t.me/",
-        website: "https://multiversx.com/",
-        email: null,
-      },
-    },
-  ];
 
   useEffect(() => {
     const loadDevelopers = async () => {
@@ -167,7 +204,7 @@ export default function TeamFinderPage() {
     };
 
     loadDevelopers();
-  }, []);
+  }, []); // Remove staticDeveloperData dependency to prevent infinite loop
 
   // Filter developers based on the activeCategory value and URL parameter
   const filteredDevelopers = developers.filter((item) => {
@@ -242,13 +279,12 @@ export default function TeamFinderPage() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center">
               <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 mr-3 border-2 border-primary/20">
-                <img
+                <ProfileImage
                   src={dev.profileImageUrl}
-                  alt={`${dev.name}&apos;s profile`}
+                  alt={`${dev.name}'s profile`}
+                  width={56}
+                  height={56}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/default/default-avatar.png";
-                  }}
                 />
               </div>
               <div>
@@ -584,8 +620,11 @@ export default function TeamFinderPage() {
         {/* Developer list */}
         <div className="mb-10">
           {loading ? (
-            <div className="flex justify-center items-center py-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark"></div>
+            <div className="py-10">
+              <CoolLoader 
+                message="Loading amazing developers..." 
+                size="lg"
+              />
             </div>
           ) : (
             <>
@@ -633,9 +672,11 @@ export default function TeamFinderPage() {
                         {/* Profile Image */}
                         <div className="flex-shrink-0">
                           <div className="w-16 h-16 rounded-full overflow-hidden">
-                            <img
+                            <ProfileImage
                               src={dev.profileImageUrl}
-                              alt={`${dev.name}&apos;s profile`}
+                              alt={`${dev.name}'s profile`}
+                              width={64}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -760,9 +801,11 @@ export default function TeamFinderPage() {
                                 key={dev.badges[0].id}
                                 className="flex items-center bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800/30 rounded-full px-2 py-1"
                               >
-                                <img
+                                <Image
                                   src={dev.badges[0].imageUrl}
                                   alt={dev.badges[0].name}
+                                  width={12}
+                                  height={12}
                                   className="w-3 h-3 mr-1"
                                 />
                                 <span className="text-xs text-yellow-800 dark:text-yellow-300 font-medium">

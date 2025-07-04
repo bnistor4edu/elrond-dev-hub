@@ -1,4 +1,5 @@
 import { GetServerSideProps } from 'next';
+import Image from 'next/image';
 import { NextSeo } from 'next-seo';
 import { useEffect, useMemo, useState } from 'react';
 import { FiCopy, FiExternalLink, FiTwitter } from 'react-icons/fi';
@@ -67,9 +68,11 @@ export default function PostPage({ post, morePosts }: { post: MediaResource; mor
 
             <div>
               <a href={shareUrl} target="_blank" rel="noreferrer">
-                <img
+                <Image
                   src={post.image_url as string}
                   alt={post.title}
+                  width={800}
+                  height={400}
                   className="object-cover h-44 md:h-64 w-full object-center rounded-md"
                 />
               </a>

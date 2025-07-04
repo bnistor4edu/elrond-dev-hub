@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { FiBook, FiShare2, FiCopy, FiCheck } from "react-icons/fi";
 import CategoryBadge from "./shared/CategoryBadge";
 
@@ -57,9 +58,11 @@ export default function PostItemGrid({
     <article className="flex flex-col w-full border-0.5 border-theme-border dark:border-theme-border-dark rounded-md bg-white dark:bg-secondary-dark-lighter shadow-sm overflow-hidden">
       <div className="border-b-0.5 border-theme-border dark:border-theme-border-dark relative">
         <a href={readArticleUrl} target="_blank" rel="noreferrer">
-          <img
-            src={post.image_url}
+          <Image
+            src={post.image_url || "/default/default-avatar.png"}
             alt={post.title}
+            width={400}
+            height={300}
             className={`object-cover ${imageHeight} w-full object-center rounded-t-md`}
           />
         </a>

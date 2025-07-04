@@ -1,6 +1,6 @@
 import { NextSeo } from 'next-seo';
 import { useRouter } from 'next/router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Layout from '../components/Layout';
 import PostItemGrid, { IPostItemGrid } from '../components/PostItemGrid';
@@ -18,7 +18,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const search = async (query: string) => {
+  const search = useCallback(async (query: string) => {
     try {
       setLoading(true);
       const { hits, nbPages } = await algolia.search(query, {
@@ -38,7 +38,7 @@ export default function Search() {
       setInitialLoad(false);
       document.querySelector("main")?.scrollTo(0, 0);
     }
-  };
+  }, [currentPage]);
 
   const onPrevious = async () => {
     setCurrentPage(currentPage - 1);
@@ -63,7 +63,7 @@ export default function Search() {
         }
       })();
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, search]);
 
   useEffect(() => {
     if (query) {
@@ -71,7 +71,7 @@ export default function Search() {
         await search(query);
       })();
     }
-  }, [currentPage]);
+  }, [currentPage, query, search]);
 
   if (initialLoad) {
     return (

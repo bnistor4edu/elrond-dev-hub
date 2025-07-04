@@ -1,6 +1,6 @@
 import { NextSeo } from "next-seo";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import Layout from "../components/Layout";
 import PostItemGrid, { IPostItemGrid } from "../components/PostItemGrid";
@@ -60,7 +60,7 @@ export default function List() {
     return "";
   }, [category, categories]);
 
-  const search = async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     if (category) {
       try {
@@ -73,7 +73,7 @@ export default function List() {
         document.querySelector("main")?.scrollTo(0, 0);
       }
     }
-  };
+  }, [category, currentPage]);
 
   useEffect(() => {
     if (totalPages) {
@@ -128,15 +128,7 @@ export default function List() {
         await search();
       })();
     }
-  }, [currentPage]);
-
-  useEffect(() => {
-    if (category) {
-      (async () => {
-        await search();
-      })();
-    }
-  }, [category]);
+  }, [currentPage, category, search]);
 
   if (initialLoad) {
     return (

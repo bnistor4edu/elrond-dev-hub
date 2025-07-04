@@ -60,11 +60,11 @@ const menuSection: ILinksGroupProps = {
       url: "/toolindex",
       icon: FiAlignCenter,
     },
-    // {
-    //   label: "Whishlist [🆕]",
-    //   url: "/whishlist",
-    //   icon: FiGift,
-    // },
+    {
+      label: "Project Requests [🆕]",
+      url: "/project-requests",
+      icon: FiMessageCircle,
+    },
     {
       label: "Bounties [🆕]",
       url: "/bounties",
@@ -224,6 +224,27 @@ const gettingStartedSection: ILinksGroupProps = {
   ],
 };
 
+// Map of category titles to icons - moved outside component to prevent recreation
+const categoryIconMap: Record<string, React.ElementType> = {
+  "Smart Contracts": FiCheckSquare,
+  Frontend: FiExternalLink,
+  Backend: FiServer,
+  Tools: FiBriefcase,
+  Tutorials: FiBookOpen,
+  Libraries: FiFolder,
+  Articles: FiFolder,
+  Videos: FiExternalLink,
+  Podcasts: FiHeadphones,
+  Courses: FiBookOpen,
+  Projects: FiBriefcase,
+  Others: FiOctagon,
+  "Dev Tools": FiTool,
+  // Add more mappings as needed
+};
+
+// Default icon to use if no mapping is found
+const defaultCategoryIcon = FiFolder;
+
 export default function Leftbar() {
   const [categoriesSection, setCategoriesSection] =
     useState<ILinksGroupProps | null>(null);
@@ -238,27 +259,6 @@ export default function Leftbar() {
       _setIsNewsletterPopupOpen = null;
     };
   }, [setIsNewsletterPopupOpen]);
-
-  // Map of category titles to icons
-  const categoryIconMap: Record<string, React.ElementType> = {
-    "Smart Contracts": FiCheckSquare,
-    Frontend: FiExternalLink,
-    Backend: FiServer,
-    Tools: FiBriefcase,
-    Tutorials: FiBookOpen,
-    Libraries: FiFolder,
-    Articles: FiFolder,
-    Videos: FiExternalLink,
-    Podcasts: FiHeadphones,
-    Courses: FiBookOpen,
-    Projects: FiBriefcase,
-    Others: FiOctagon,
-    "Dev Tools": FiTool,
-    // Add more mappings as needed
-  };
-
-  // Default icon to use if no mapping is found
-  const defaultCategoryIcon = FiFolder;
 
   useEffect(() => {
     (async () => {
@@ -282,7 +282,7 @@ export default function Leftbar() {
       } finally {
       }
     })();
-  }, []);
+  }, []); // Remove dependencies to prevent infinite loop
 
   // Update the state reference for the popup rendering
   _isNewsletterPopupOpen = isNewsletterPopupOpen;

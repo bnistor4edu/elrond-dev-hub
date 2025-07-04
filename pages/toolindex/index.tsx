@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import RequestUpdate from "../../components/forms/RequestUpdate";
 import SubmitDecenter from "../../components/forms/SubmitDecenter";
+import CoolLoader from "../../components/shared/CoolLoader";
 
 // Interface for the project data structure
 interface ProjectItem {
@@ -736,8 +737,11 @@ export default function DecenterPage() {
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center py-10">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark"></div>
+        <div className="py-10">
+          <CoolLoader 
+            message="Loading development tools..." 
+            size="lg"
+          />
         </div>
       ) : (
         <>

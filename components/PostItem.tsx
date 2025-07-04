@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { FiBook, FiShare2, FiCopy, FiCheck } from "react-icons/fi";
 
@@ -75,9 +76,11 @@ export default function PostItem({ post }: { post: IPostItem }) {
           rel="noreferrer"
           className="z-50"
         >
-          <img
+          <Image
             src={post.image_url}
             alt={post.title}
+            width={800}
+            height={400}
             className="object-cover h-44 md:h-64 w-full object-center rounded-t-md"
           />
         </a>

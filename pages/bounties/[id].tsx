@@ -33,6 +33,7 @@ import Link from "next/link";
 import { marked } from "marked"; // For rendering markdown description
 import Image from "next/image";
 import { useRouter } from "next/router";
+import CoolLoader from "../../components/shared/CoolLoader";
 
 // const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 // const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -153,8 +154,11 @@ export default function BountyDetailPage({
   if (loading) {
     return (
       <Layout>
-        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary dark:border-primary-dark"></div>
+        <div className="min-h-[calc(100vh-200px)]">
+          <CoolLoader 
+            message="Loading bounty details..." 
+            size="lg"
+          />
         </div>
       </Layout>
     );

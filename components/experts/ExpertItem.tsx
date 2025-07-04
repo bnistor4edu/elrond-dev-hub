@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import {
   AiFillGithub,
@@ -6,6 +6,43 @@ import {
   AiFillMail,
   AiFillTwitterSquare,
 } from "react-icons/ai";
+
+// Custom SafeImage component with proper error handling
+const SafeImage = ({ src, alt, width, height, className, objectFit }: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+}) => {
+  const [imageSrc, setImageSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImageSrc(src);
+    setHasError(false);
+  }, [src]);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      setImageSrc("/default/default-avatar.png");
+    }
+  };
+
+  return (
+    <Image
+      src={imageSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      style={{ objectFit: objectFit }}
+      onError={handleError}
+    />
+  );
+};
 
 export interface IExpertItem {
   name: string;
@@ -32,22 +69,16 @@ export default function ExpertItem({
   imageHeight = "h-44",
   showLinks = true,
 }: IExpertItemProps) {
-  const [imgError, setImgError] = useState(false);
-  const imageSrc = imgError 
-    ? "/default/default-avatar.png" 
-    : (expert.image_url || "/default/avatar-default.png");
-    
   return (
     <article className="xdev-expert flex flex-col w-full border-0.5 border-theme-border dark:border-theme-border-dark rounded-md bg-white dark:bg-secondary-dark-lighter shadow-sm overflow-hidden">
       <div className="w-full max-w-44 mx-auto mt-6">
         <div className={`mx-auto w-36 h-36 rounded-full shadow-lg overflow-hidden bg-gray-200 dark:bg-gray-700 border-2 border-primary/20 relative`}>
-          <Image
-            src={imageSrc}
+          <SafeImage
+            src={expert.image_url || "/default/default-avatar.png"}
             alt={expert.name}
             width={144}
             height={144}
             objectFit="cover"
-            onError={() => setImgError(true)}
           />
         </div>
       </div>

@@ -20,6 +20,7 @@ import {
 import Button from "../../components/shared/Button";
 import Image from "next/image";
 import SubmitLeaderboardProject from "../../components/forms/SubmitLeaderboardProject";
+import CoolLoader from "../../components/shared/CoolLoader";
 
 // Create a Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -539,8 +540,11 @@ export default function MonthlyLeaderboardPage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary dark:border-primary-dark"></div>
+            <div className="h-40">
+              <CoolLoader 
+                message="Loading leaderboard data..." 
+                size="md"
+              />
             </div>
           ) : error ? (
             <div className="text-center text-red-600 dark:text-red-400 p-4 bg-red-100 dark:bg-red-900/40 rounded-lg border border-red-200 dark:border-red-800/50 m-4">

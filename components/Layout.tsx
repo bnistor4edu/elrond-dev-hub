@@ -6,7 +6,8 @@ import SearchBar from "./Navbar/SearchBar";
 import PostItemGrid from "./PostItemGrid";
 import MonthlyCodingLeaderboard from "./leaderboard/MonthlyLeaderboard";
 import PlatformStats from "./stats/PlatformStats";
-import ActivityStats from "./stats/ActivityStats";
+
+import News from "./stats/News";
 
 interface IColumnClasses {
   leftColumn: string;
@@ -72,8 +73,8 @@ export default function Layout({ hideRightBar = false, children }: any) {
 
             <div className="flex flex-col gap-10">
               {/* <MonthlyCodingLeaderboard /> */}
+              <News />
               <PlatformStats />
-              <ActivityStats />
               {/* <PostItemGrid
                 post={{
                   title: mainBanner.title,
@@ -135,8 +136,10 @@ export default function Layout({ hideRightBar = false, children }: any) {
         </div>
       </div>
 
-      <div className="sm:hidden fixed bottom-0 left-0 w-full px-8 py-4 bg-secondary dark:bg-secondary-dark shadow-sm z-50">
-        <SearchBar />
+      <div className="sm:hidden fixed bottom-0 left-0 w-full px-4 py-3 bg-white dark:bg-secondary-dark border-t border-theme-border/20 dark:border-theme-border-dark/20 shadow-lg backdrop-blur-sm z-50">
+        <div className="max-w-sm mx-auto">
+          <SearchBar />
+        </div>
       </div>
     </div>
   );

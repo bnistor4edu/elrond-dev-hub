@@ -110,6 +110,7 @@ export default function WishlistPage({ wishlistData }: WishlistPageProps) {
               src={"/multiversx/x-mint.svg"}
               height={20}
               width={20}
+              alt="MultiversX Logo"
               className=""
             ></Image>{" "}
             MultiversX Foundation-curated list of desired development projects

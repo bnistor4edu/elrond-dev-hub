@@ -5,11 +5,11 @@ import Button from "../../components/shared/Button";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@supabase/supabase-js";
-import { GetServerSideProps } from "next";
 import SubmitBounty from "../../components/forms/SubmitBounty";
 import BountyCard from "../../components/bounties/BountyCard";
 import BountyProcessExplainer from "../../components/bounties/BountyProcessExplainer";
 import Link from "next/link";
+import CoolLoader from "../../components/shared/CoolLoader";
 
 // Interface for the PeerMe bounty data structure
 interface PeerMeBounty {
@@ -53,11 +53,7 @@ interface PeerMeBounty {
   url: string;
 }
 
-interface BountyPageProps {
-  bountyData: PeerMeBounty[];
-  error?: string | null; // Allow null for no error
-  apiStatus?: number | null; // To pass API status code if needed
-}
+// Remove BountyPageProps interface - no longer needed for client-side fetching
 
 // Create a Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -72,68 +68,9 @@ const SORT_OPTIONS = [
   { value: "lowest_amount", label: "Lowest Reward" },
 ];
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  try {
-    const apiKey = process.env.PEERME_API_KEY;
-    if (!apiKey) {
-      console.error("PeerMe API key is not configured.");
-      return {
-        props: {
-          bountyData: [],
-          error: "Configuration error: PeerMe API key is not set.",
-          apiStatus: null,
-        },
-      };
-    }
+// Remove getServerSideProps - we'll fetch data client-side instead
 
-    const response = await fetch(
-      `https://api.peerme.io/v1/bounties?page=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          Accept: "application/json", 
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error fetching data from PeerMe API:", response.status, errorText);
-      // If entity not found (404) or other client/server error, pass this info to the page
-      return {
-        props: {
-          bountyData: [],
-          error: `Failed to fetch bounties. PeerMe API returned: ${response.status}. ${errorText}`,
-          apiStatus: response.status,
-        },
-      };
-    }
-
-    const data = await response.json();
-    // The PeerMe API returns a data array containing the bounties
-    const bounties = data.data || [];
-
-    return {
-      props: {
-        bountyData: bounties,
-        error: null,
-        apiStatus: response.status,
-      },
-    };
-  } catch (err: any) {
-    console.error("Network or other error in getServerSideProps (PeerMe):", err);
-    return {
-      props: {
-        bountyData: [],
-        error: `An unexpected error occurred: ${err.message}`,
-        apiStatus: null,
-      },
-    };
-  }
-};
-
-export default function BountyPage({ bountyData, error, apiStatus }: BountyPageProps) {
+export default function BountyPage() {
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -141,7 +78,43 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
   const [searchTerm, setSearchTerm] = useState("");
   const [activeStatuses, setActiveStatuses] = useState<string[]>([]);
   const [showOnlyAvailable, setShowOnlyAvailable] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [bountyData, setBountyData] = useState<PeerMeBounty[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch bounties data client-side
+  useEffect(() => {
+    const fetchBounties = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/bounties');
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch bounties: ${response.status} ${errorText}`);
+        }
+        
+        const data = await response.json();
+        const bounties: PeerMeBounty[] = data.bounties || [];
+        
+        // Debug: Log all unique statuses to understand what we're working with
+        const uniqueStatuses = Array.from(new Set(bounties.map((b: PeerMeBounty) => b.status)));
+        console.log('Available bounty statuses:', uniqueStatuses);
+        console.log('Sample bounty with deadline info:', bounties.find((b: PeerMeBounty) => b.deadlineAt)?.status, bounties.find((b: PeerMeBounty) => b.deadlineAt)?.hasDeadlineEnded);
+        
+        setBountyData(bounties);
+      } catch (err: any) {
+        console.error('Error fetching bounties:', err);
+        setError(err.message || 'An unexpected error occurred while fetching bounties.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBounties();
+  }, []);
 
   const validBountyData = bountyData || [];
 
@@ -170,7 +143,12 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
       (item.entity && item.entity.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (item.entity.tags && item.entity.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
     )
-    .filter(item => !showOnlyAvailable || (item.status === "open" && !item.hasDeadlineEnded));
+    .filter(item => {
+      if (!showOnlyAvailable) return true; // Show all when filter is off
+      // Consider a bounty "active" if it's not completed/closed AND deadline hasn't ended
+      const activeStatuses = ["open", "in_progress", "evaluating"];
+      return activeStatuses.includes(item.status) && !item.hasDeadlineEnded;
+    });
 
   const sortedBounties = [...filteredBounties].sort((a, b) => {
     switch (sortBy) {
@@ -231,45 +209,49 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
         description="Browse development bounties from PeerMe. Submissions handled on the PeerMe platform."
       />
 
-      {loading ? (
-        <div className="flex justify-center items-center py-10 min-h-[300px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-dark"></div>
-        </div>
-      ) : error ? (
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-center">
-            <FiAlertCircle className="inline-block w-5 h-5 mr-2 align-middle" />
-            <strong className="font-semibold">Failed to load bounties.</strong>
-            <p className="text-sm">{error}</p>
-            {apiStatus && <p className="text-xs mt-1">API Status: {apiStatus}</p>}
+      <section className="container mx-auto">
+        <div className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary-dark/10 dark:to-primary-dark/20 rounded-2xl p-6 mb-8">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl md:text-4xl font-bold text-theme-title dark:text-theme-title-dark mb-4 relative">
+              Bounties (with PeerMe)
+              <div className="absolute w-14 h-0.5 bg-primary dark:bg-primary-dark left-1/2 transform -translate-x-1/2 bottom-0"></div>
+            </h1>
+            <p className="text-sm md:text-base text-theme-text dark:text-theme-text-dark max-w-3xl mx-auto">
+              Explore bounties sourced from the PeerMe platform. 
+              Note: Applications and submissions are managed directly on PeerMe.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 mt-4">
+            <Link href="#process-explainer">
+              <a>
+                <Button
+                  label="How It Works"
+                  icon={FiBriefcase}
+                  theme="secondary"
+                  class="text-sm py-2 px-4"
+                />
+              </a>
+            </Link>
           </div>
         </div>
-      ) : (
-        <section className="container mx-auto">
-          <div className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary-dark/10 dark:to-primary-dark/20 rounded-2xl p-6 mb-8">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl md:text-4xl font-bold text-theme-title dark:text-theme-title-dark mb-4 relative">
-                Bounties (with PeerMe)
-                <div className="absolute w-14 h-0.5 bg-primary dark:bg-primary-dark left-1/2 transform -translate-x-1/2 bottom-0"></div>
-              </h1>
-              <p className="text-sm md:text-base text-theme-text dark:text-theme-text-dark max-w-3xl mx-auto">
-                Explore bounties sourced from the PeerMe platform. 
-                Note: Applications and submissions are managed directly on PeerMe.
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-3 mt-4">
-              <Link href="#process-explainer">
-                <a>
-                  <Button
-                    label="How It Works"
-                    icon={FiBriefcase}
-                    theme="secondary"
-                    class="text-sm py-2 px-4"
-                  />
-                </a>
-              </Link>
+
+        {loading ? (
+          <div className="py-10 min-h-[300px]">
+            <CoolLoader 
+              message="Loading bounties from PeerMe..." 
+              size="lg"
+            />
+          </div>
+        ) : error ? (
+          <div className="px-4 py-8">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-center">
+              <FiAlertCircle className="inline-block w-5 h-5 mr-2 align-middle" />
+              <strong className="font-semibold">Failed to load bounties.</strong>
+              <p className="text-sm">{error}</p>
             </div>
           </div>
+        ) : (
+          <div>
           
           {/* Filters Bar - aligned with toolindex style */}
           <div className="mb-5 bg-white dark:bg-secondary-dark rounded-xl shadow-lg p-3 border border-theme-border dark:border-theme-border-dark">
@@ -296,7 +278,7 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
                   }`}
                 >
                   <FiCheckCircle className="w-3 h-3" />
-                  {showOnlyAvailable ? "Available Only" : "Show All"}
+                  {showOnlyAvailable ? "Active Only" : "Show All"}
                 </button>
 
                 {/* Search box */}
@@ -436,12 +418,12 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
               <FiBriefcase size={52} className="mx-auto text-theme-text/30 dark:text-theme-text-dark/30 mb-4" />
               <h2 className="text-xl font-semibold text-theme-title dark:text-theme-title-dark mb-2">
                 {showOnlyAvailable 
-                  ? "No live bounties available right now." 
+                  ? "No active bounties available right now." 
                   : "No bounties available right now."}
               </h2>
               <p className="text-theme-text dark:text-theme-text-dark mb-4 max-w-md mx-auto">
                 {showOnlyAvailable 
-                  ? "There are currently no open bounties available. You can disable the 'Available Only' filter to see all bounties including closed ones."
+                  ? "There are currently no active bounties available. You can disable the 'Active Only' filter to see all bounties including closed ones."
                   : "If you're a company or team, you can post a new bounty directly on the PeerMe platform. Bounties will then be listed here."}
               </p>
               
@@ -474,8 +456,9 @@ export default function BountyPage({ bountyData, error, apiStatus }: BountyPageP
               ))}
             </div>
           )}
-        </section>
-      )}
+        </div>
+        )}
+      </section>
 
       <section id="process-explainer" className="py-10 md:py-16">
         <div className="container mx-auto">
